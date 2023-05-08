@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+import re
 
 # load env vars
 load_dotenv()
@@ -20,12 +21,26 @@ def save_file_names(file_names, output_file, folder_path):
         for name in file_names:
             file.write(name + '\n')
 
+def findWord(word, line):
+    """
+    Description:
+        Searches for the complete word is in a line, 
+        if the word is a piece of another word in the line,
+        it will not match
+    Parameters:
+        word (string): word to be searched in a line of text
+        line (string): line of text were we will look for the word
+    Returns:
+        bool: returs true if the word in in the line, false if it isn't
+    """
+    return bool(re.search(r'\b' + word + '\b', line))
+
 def handle_title_case(line, file_names, original_lines, md_file):
     current_file = os.path.splitext(os.path.basename(md_file))[0]
     title = line.strip('#').strip()
     for name in file_names:
         file_name = os.path.splitext(os.path.basename(name))[0]
-        if file_name.lower() == title.lower():
+        if findWord(file_name.lower(), title.lower()):
             new_line = f'[[{file_name}]] main article.\n'
             modified_line = line
             if new_line not in original_lines and current_file != file_name:
@@ -36,7 +51,7 @@ def handle_other_case(line, file_names, md_file):
     current_file = os.path.splitext(os.path.basename(md_file))[0]
     for name in file_names:
         file_name = os.path.splitext(os.path.basename(name))[0]
-        if file_name in line and f'[[{file_name}]]' not in line and current_file != file_name:
+        if findWord(file_name.lower(), line.lower()) and f'[[{file_name}]]' not in line and current_file != file_name:
             line = line.replace(file_name, f'[[{file_name}]]')
     return line
 
